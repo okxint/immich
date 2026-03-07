@@ -32,9 +32,10 @@
     onReady?: () => void;
     onError?: () => void;
     onSwipe?: (event: SwipeCustomEvent) => void;
+    onTagFace?: () => Promise<void>;
   }
 
-  let { cursor, element = $bindable(), sharedLink, onReady, onError, onSwipe }: Props = $props();
+  let { cursor, element = $bindable(), sharedLink, onReady, onError, onSwipe, onTagFace }: Props = $props();
 
   const { slideshowState, slideshowLook } = slideshowStore;
   const asset = $derived(cursor.current);
@@ -265,6 +266,12 @@
   </AdaptiveImage>
 
   {#if isFaceEditMode.value && assetViewerManager.imgRef}
-    <FaceEditor htmlElement={assetViewerManager.imgRef} {containerWidth} {containerHeight} assetId={asset.id} />
+    <FaceEditor
+      htmlElement={assetViewerManager.imgRef}
+      {containerWidth}
+      {containerHeight}
+      assetId={asset.id}
+      {onTagFace}
+    />
   {/if}
 </div>
