@@ -49,7 +49,11 @@ export class AlbumModalRowConverter {
     const filteredAlbums = sortAlbums(
       search.length > 0 && albums.length > 0
         ? albums.filter((album) => {
-            return normalizeSearchString(album.albumName).includes(normalizeSearchString(search));
+            const query = normalizeSearchString(search);
+            return (
+              normalizeSearchString(album.albumName).includes(query) ||
+              normalizeSearchString(album.description ?? '').includes(query)
+            );
           })
         : albums,
       { sortBy: this.sortBy, orderBy: this.orderBy },
