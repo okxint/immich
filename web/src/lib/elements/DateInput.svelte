@@ -18,18 +18,31 @@
 
   let fallbackMax = $derived(type === 'date' ? '9999-12-31' : '9999-12-31T23:59');
 
-  // Updating `value` directly causes the date input to reset itself or
-  // interfere with user changes.
-  let updatedValue = $derived(value);
+  // Hold intermediate typed value; only commit to parent on blur or Enter
+  // to avoid resetting the date when the browser clears a segment mid-edit.
+  let updatedValue = $state(value ?? '');
+  let focused = $state(false);
+
+  $effect(() => {
+    // Sync inbound prop changes (e.g. parent resets the date) only when
+    // the input is not focused, so in-progress edits are not overwritten.
+    if (!focused) {
+      updatedValue = value ?? '';
+    }
+  });
 </script>
 
 <input
   {...rest}
   {type}
-  bind:value
+  value={updatedValue}
   max={max || fallbackMax}
+  onfocus={() => (focused = true)}
   oninput={(e) => (updatedValue = e.currentTarget.value)}
-  onblur={() => (value = updatedValue)}
+  onblur={() => {
+    focused = false;
+    value = updatedValue;
+  }}
   onkeydown={(e) => {
     if (e.key === 'Enter') {
       value = updatedValue;
