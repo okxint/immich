@@ -272,26 +272,28 @@ export class IntegrityService extends BaseService {
   async handleUntrackedFiles({ type, paths }: IIntegrityUntrackedFilesJob): Promise<JobStatus> {
     this.logger.log(`Processing batch of ${paths.length} files to check if they are untracked.`);
 
-    const untrackedFiles = new Set<string>(paths);
+    // Normalize to NFC so that paths from filesystems that return NFD (e.g. macOS APFS)
+    // compare equal to NFC paths stored in the database.
+    const untrackedFiles = new Set<string>(paths.map((p) => p.normalize('NFC')));
     if (type === 'asset') {
       const assets = await this.integrityRepository.getAssetPathsByPaths(paths);
       for (const { originalPath, encodedVideoPath } of assets) {
-        untrackedFiles.delete(originalPath);
+        untrackedFiles.delete(originalPath.normalize('NFC'));
 
         if (encodedVideoPath) {
-          untrackedFiles.delete(encodedVideoPath);
+          untrackedFiles.delete(encodedVideoPath.normalize('NFC'));
         }
       }
     } else {
       const assets = await this.integrityRepository.getAssetFilePathsByPaths(paths);
       for (const { path } of assets) {
-        untrackedFiles.delete(path);
+        untrackedFiles.delete(path.normalize('NFC'));
       }
     }
 
     const personThumbnailPaths = await this.integrityRepository.getPersonThumbnailPathsByPaths(paths);
     for (const { thumbnailPath } of personThumbnailPaths) {
-      untrackedFiles.delete(thumbnailPath);
+      untrackedFiles.delete(thumbnailPath.normalize('NFC'));
     }
 
     if (untrackedFiles.size > 0) {
